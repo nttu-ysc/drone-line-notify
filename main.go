@@ -7,13 +7,34 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
+	"sync"
 	"time"
 )
 
 const notifyUrl = "https://notify-api.line.me/api/notify"
 
 func main() {
-	var accessToken = os.Getenv("line_access_token")
+	body := formatBody()
+
+	var accessTokens = strings.Split(os.Getenv("line_access_token"), ",")
+
+	wg := sync.WaitGroup{}
+
+	for _, v := range accessTokens {
+		wg.Add(1)
+		go func(accessToken string, body io.Reader) {
+			callLineNotify(accessToken, body)
+			defer wg.Done()
+		}(v, body)
+	}
+
+	wg.Wait()
+
+	fmt.Println("Line notify done.")
+}
+
+func formatBody() io.Reader {
 	data := url.Values{}
 	data.Add("message", fmt.Sprintf(`
 Repo: %s
@@ -37,11 +58,13 @@ Current time: %s`,
 		os.Getenv("DRONE_COMMIT_LINK"),
 		time.Now().Local().Format("2006-01-02T15:04:05 -07:00:00"),
 	))
-	body := bytes.NewBufferString(data.Encode())
+	return bytes.NewBufferString(data.Encode())
+}
 
+func callLineNotify(accessToken string, body io.Reader) {
 	req, err := http.NewRequest(http.MethodPost, notifyUrl, body)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Authorization", "Bearer "+accessToken)
