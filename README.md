@@ -16,7 +16,7 @@ name: Drone ci
 steps:
 - name: line notify
     image: shundevhub/drone-line-notify
-    environment:
+    settings:
       line_access_token:
         from_secret: YOUR_ACCESS_TOKEN
     when:

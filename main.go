@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,14 +15,20 @@ import (
 
 const notifyUrl = "https://notify-api.line.me/api/notify"
 
+var accessTokens *string
+
+func init() {
+	accessTokens = flag.String("line_access_token", os.Getenv("PLUGIN_LINE_ACCESS_TOKEN"), "line access token")
+}
+
 func main() {
+	flag.Parse()
+
+	accessTokensArr := strings.Split(*accessTokens, ",")
+	wg := sync.WaitGroup{}
 	body := formatBody()
 
-	var accessTokens = strings.Split(os.Getenv("line_access_token"), ",")
-
-	wg := sync.WaitGroup{}
-
-	for _, v := range accessTokens {
+	for _, v := range accessTokensArr {
 		wg.Add(1)
 		go func(accessToken string, body io.Reader) {
 			callLineNotify(accessToken, body)
