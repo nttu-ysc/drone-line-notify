@@ -7,7 +7,7 @@ You can issue the line notify token from LINE Notify. See [LINE Notify doc](http
 
 ## Usage
 
-Add plugin in `steps` and set environment variable `line_access_token`
+Add plugin in `steps` and set settings variable `line_access_token`
 
 ```yml
 kind: pipeline
