@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -15,14 +16,14 @@ import (
 
 const notifyUrl = "https://notify-api.line.me/api/notify"
 
-var accessTokens *string
-
-func init() {
-	accessTokens = flag.String("line_access_token", os.Getenv("PLUGIN_LINE_ACCESS_TOKEN"), "line access token")
-}
+var accessTokens = flag.String("line_access_token", os.Getenv("PLUGIN_LINE_ACCESS_TOKEN"), "line access token")
 
 func main() {
 	flag.Parse()
+
+	if *accessTokens == "" {
+		log.Fatalln("Missing LINE access token")
+	}
 
 	accessTokensArr := strings.Split(*accessTokens, ",")
 	wg := sync.WaitGroup{}
