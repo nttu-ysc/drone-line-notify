@@ -2,44 +2,62 @@ package main
 
 import (
 	"bytes"
-	"flag"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/spf13/cobra"
 )
 
-const notifyUrl = "https://notify-api.line.me/api/notify"
+const (
+	notifyUrl = "https://notify-api.line.me/api/notify"
+	version   = "v1.1.0"
+)
 
-var accessTokens = flag.String("line_access_token", os.Getenv("PLUGIN_LINE_ACCESS_TOKEN"), "line access token")
+var accessTokens *string
+var rootCmd = cobra.Command{
+	Use:     "drone-line-notify",
+	Version: version,
+	Long: `
+    ____                              ___                              __  _ ____     
+   / __ \_________  ____  ___        / (_)___  ___        ____  ____  / /_(_) __/_  __
+  / / / / ___/ __ \/ __ \/ _ \______/ / / __ \/ _ \______/ __ \/ __ \/ __/ / /_/ / / /
+ / /_/ / /  / /_/ / / / /  __/_____/ / / / / /  __/_____/ / / / /_/ / /_/ / __/ /_/ / 
+/_____/_/   \____/_/ /_/\___/     /_/_/_/ /_/\___/     /_/ /_/\____/\__/_/_/  \__, /  
+                                                                             /____/   
+`,
+	Run: func(cmd *cobra.Command, args []string) {
+		if *accessTokens == "" {
+			cmd.Help()
+			return
+		}
+
+		accessTokensArr := strings.Split(*accessTokens, ",")
+		wg := sync.WaitGroup{}
+		body := formatBody()
+
+		for _, v := range accessTokensArr {
+			wg.Add(1)
+			go func(accessToken string, body io.Reader) {
+				callLineNotify(accessToken, body)
+				defer wg.Done()
+			}(v, body)
+		}
+
+		wg.Wait()
+
+		fmt.Println("Line notify done.")
+	},
+}
 
 func main() {
-	flag.Parse()
-
-	if *accessTokens == "" {
-		log.Fatalln("Missing LINE access token")
-	}
-
-	accessTokensArr := strings.Split(*accessTokens, ",")
-	wg := sync.WaitGroup{}
-	body := formatBody()
-
-	for _, v := range accessTokensArr {
-		wg.Add(1)
-		go func(accessToken string, body io.Reader) {
-			callLineNotify(accessToken, body)
-			defer wg.Done()
-		}(v, body)
-	}
-
-	wg.Wait()
-
-	fmt.Println("Line notify done.")
+	accessTokens = rootCmd.Flags().StringP("line_access_token", "l", os.Getenv("PLUGIN_LINE_ACCESS_TOKEN"), "LINE access token")
+	rootCmd.Execute()
 }
 
 func formatBody() io.Reader {
