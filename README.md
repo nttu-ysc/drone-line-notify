@@ -5,6 +5,15 @@ You can issue the line notify token from LINE Notify. See [LINE Notify doc](http
 - [Github](https://github.com/nttu-ysc/drone-line-notify)
 - [Docker Hub](https://hub.docker.com/r/shundevhub/drone-line-notify)
 
+## Binary usage
+With `Go` installed
+```sh
+go install github.com/nttu-ysc/drone-line-notify@latest
+```
+then you can use drone-line-notify
+
+![drone_line_notify_help](./images/help.png)
+
 ## Usage
 
 Add plugin in `steps` and set settings variable `line_access_token`
