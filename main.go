@@ -30,6 +30,9 @@ var rootCmd = cobra.Command{
  / /_/ / /  / /_/ / / / /  __/_____/ / / / / /  __/_____/ / / / /_/ / /_/ / __/ /_/ / 
 /_____/_/   \____/_/ /_/\___/     /_/_/_/ /_/\___/     /_/ /_/\____/\__/_/_/  \__, /  
                                                                              /____/   
+
+Auth: Shun Cheng
+GitHub: https://github.com/nttu-ysc/drone-line-notify
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		if *accessTokens == "" {
