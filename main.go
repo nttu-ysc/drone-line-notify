@@ -16,7 +16,7 @@ import (
 
 const (
 	notifyUrl = "https://notify-api.line.me/api/notify"
-	version   = "v1.1.0"
+	version   = "v1.1.1"
 )
 
 var accessTokens *string
