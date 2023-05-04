@@ -16,7 +16,7 @@ import (
 
 const (
 	notifyUrl = "https://notify-api.line.me/api/notify"
-	version   = "v1.1.1"
+	version   = "v1.1.2"
 )
 
 var accessTokens *string
@@ -31,7 +31,7 @@ var rootCmd = cobra.Command{
 /_____/_/   \____/_/ /_/\___/     /_/_/_/ /_/\___/     /_/ /_/\____/\__/_/_/  \__, /  
                                                                              /____/   
 
-Auth: Shun Cheng
+Author: Shun Cheng
 GitHub: https://github.com/nttu-ysc/drone-line-notify
 `,
 	Run: func(cmd *cobra.Command, args []string) {
