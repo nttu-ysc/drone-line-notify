@@ -1,11 +1,10 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -14,12 +13,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	notifyUrl = "https://notify-api.line.me/api/notify"
-	version   = "v1.1.2"
+var (
+	notifyURL = "https://notify-api.line.me/api/notify"
+	version   = "v1.1.3"
 )
 
-var accessTokens *string
+var accessTokens *[]string
 var rootCmd = cobra.Command{
 	Use:     "drone-line-notify",
 	Version: version,
@@ -35,39 +34,34 @@ Author: Shun Cheng
 GitHub: https://github.com/nttu-ysc/drone-line-notify
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		if *accessTokens == "" {
+		if len(*accessTokens) == 0 || (*accessTokens)[0] == "" {
 			cmd.Help()
 			return
 		}
 
-		accessTokensArr := strings.Split(*accessTokens, ",")
-		wg := sync.WaitGroup{}
 		body := formatBody()
 
-		for _, v := range accessTokensArr {
+		var wg sync.WaitGroup
+		for _, token := range *accessTokens {
 			wg.Add(1)
-			go func(accessToken string, body io.Reader) {
-				callLineNotify(accessToken, body)
+			go func(t string) {
 				defer wg.Done()
-			}(v, body)
+				sendLineNotify(t, body)
+			}(token)
 		}
 
 		wg.Wait()
-
-		fmt.Println("Line notify done.")
 	},
 }
 
 func main() {
-	accessTokens = rootCmd.Flags().StringP("line_access_token", "l", os.Getenv("PLUGIN_LINE_ACCESS_TOKEN"), "LINE access token")
+	accessTokens = rootCmd.Flags().StringSliceP("line_access_token", "l", []string{os.Getenv("PLUGIN_LINE_ACCESS_TOKEN")}, "LINE access token")
 	rootCmd.Execute()
 }
 
 func formatBody() io.Reader {
-	data := url.Values{}
-	data.Add("message", fmt.Sprintf(`
-Repo: %s
-Brach: %s
+	body := fmt.Sprintf(`Repo: %s
+Branch: %s
 Author: %s
 Event: %s
 Commit Message: %s
@@ -86,30 +80,34 @@ Current time: %s`,
 		os.Getenv("DRONE_BUILD_LINK"),
 		os.Getenv("DRONE_COMMIT_LINK"),
 		time.Now().Local().Format("2006-01-02T15:04:05 -07:00:00"),
-	))
-	return bytes.NewBufferString(data.Encode())
+	)
+	return strings.NewReader(body)
 }
 
-func callLineNotify(accessToken string, body io.Reader) {
-	req, err := http.NewRequest(http.MethodPost, notifyUrl, body)
+// sendLineNotify sends a Line notification using the specified access token and request body.
+func sendLineNotify(accessToken string, body io.Reader) {
+	req, err := http.NewRequest(http.MethodPost, notifyURL, body)
 	if err != nil {
-		fmt.Println(err)
-	}
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("Authorization", "Bearer "+accessToken)
-
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer res.Body.Close()
-
-	b, err := io.ReadAll(res.Body)
-	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return
 	}
 
-	fmt.Println(string(b))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer resp.Body.Close()
+
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	log.Println("Line notification response:", string(responseBody))
 }
