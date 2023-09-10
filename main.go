@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -13,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
+const (
 	notifyURL = "https://notify-api.line.me/api/notify"
 	version   = "v1.1.3"
 )
@@ -60,8 +61,10 @@ func main() {
 }
 
 func formatBody() io.Reader {
-	body := fmt.Sprintf(`Repo: %s
-Branch: %s
+	data := url.Values{}
+	data.Add("message", fmt.Sprintf(`
+Repo: %s
+Brach: %s
 Author: %s
 Event: %s
 Commit Message: %s
@@ -80,8 +83,8 @@ Current time: %s`,
 		os.Getenv("DRONE_BUILD_LINK"),
 		os.Getenv("DRONE_COMMIT_LINK"),
 		time.Now().Local().Format("2006-01-02T15:04:05 -07:00:00"),
-	)
-	return strings.NewReader(body)
+	))
+	return strings.NewReader(data.Encode())
 }
 
 // sendLineNotify sends a Line notification using the specified access token and request body.
