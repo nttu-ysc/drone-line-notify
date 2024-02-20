@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	notifyURL = "https://notify-api.line.me/api/notify"
-	version   = "v1.1.3"
+	notifyUrl = "https://notify-api.line.me/api/notify"
+	version   = "v1.1.4"
 )
 
 var accessTokens *[]string
@@ -64,7 +64,7 @@ func formatBody() io.Reader {
 	data := url.Values{}
 	data.Add("message", fmt.Sprintf(`
 Repo: %s
-Brach: %s
+Branch: %s
 Author: %s
 Event: %s
 Commit Message: %s
@@ -89,7 +89,7 @@ Current time: %s`,
 
 // sendLineNotify sends a Line notification using the specified access token and request body.
 func sendLineNotify(accessToken string, body io.Reader) {
-	req, err := http.NewRequest(http.MethodPost, notifyURL, body)
+	req, err := http.NewRequest(http.MethodPost, notifyUrl, body)
 	if err != nil {
 		log.Println(err)
 		return
