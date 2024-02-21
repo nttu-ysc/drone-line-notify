@@ -20,6 +20,7 @@ const (
 )
 
 var accessTokens *[]string
+var message *string
 var rootCmd = cobra.Command{
 	Use:     "drone-line-notify",
 	Version: version,
@@ -57,12 +58,14 @@ GitHub: https://github.com/nttu-ysc/drone-line-notify
 
 func main() {
 	accessTokens = rootCmd.Flags().StringSliceP("line_access_token", "l", []string{os.Getenv("PLUGIN_LINE_ACCESS_TOKEN")}, "LINE access token")
+	message = rootCmd.Flags().StringP("message", "m", "", "message")
 	rootCmd.Execute()
 }
 
 func formatBody() io.Reader {
 	data := url.Values{}
-	data.Add("message", fmt.Sprintf(`
+	if *message == "" {
+		*message = fmt.Sprintf(`
 Repo: %s
 Branch: %s
 Author: %s
@@ -73,17 +76,19 @@ Drone Build status: %s
 Build: %s
 Changes: %s
 Current time: %s`,
-		os.Getenv("DRONE_REPO"),
-		os.Getenv("DRONE_COMMIT_BRANCH"),
-		os.Getenv("DRONE_COMMIT_AUTHOR"),
-		os.Getenv("DRONE_BUILD_EVENT"),
-		os.Getenv("DRONE_COMMIT_MESSAGE"),
-		os.Getenv("DRONE_BUILD_NUMBER"),
-		os.Getenv("DRONE_BUILD_STATUS"),
-		os.Getenv("DRONE_BUILD_LINK"),
-		os.Getenv("DRONE_COMMIT_LINK"),
-		time.Now().Local().Format("2006-01-02T15:04:05 -07:00:00"),
-	))
+			os.Getenv("DRONE_REPO"),
+			os.Getenv("DRONE_COMMIT_BRANCH"),
+			os.Getenv("DRONE_COMMIT_AUTHOR"),
+			os.Getenv("DRONE_BUILD_EVENT"),
+			os.Getenv("DRONE_COMMIT_MESSAGE"),
+			os.Getenv("DRONE_BUILD_NUMBER"),
+			os.Getenv("DRONE_BUILD_STATUS"),
+			os.Getenv("DRONE_BUILD_LINK"),
+			os.Getenv("DRONE_COMMIT_LINK"),
+			time.Now().Local().Format("2006-01-02T15:04:05 -07:00:00"),
+		)
+	}
+	data.Add("message", *message)
 	return strings.NewReader(data.Encode())
 }
 
