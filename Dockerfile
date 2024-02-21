@@ -10,9 +10,11 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-s -w' -o main .
 
 # run env
-FROM scratch
+FROM alpine
 
-COPY --from=build-env /etc/ssl/certs/ /etc/ssl/certs/
+ENV TZ="Asia/Taipei"
+
+RUN apk update && apk add -U tzdata
 
 WORKDIR /app
 
