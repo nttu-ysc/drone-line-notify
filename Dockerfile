@@ -1,5 +1,5 @@
 # go build env
-FROM golang:1.20.3-alpine AS build-env
+FROM golang:1.23.2-alpine AS build-env
 
 RUN mkdir -p /app
 
